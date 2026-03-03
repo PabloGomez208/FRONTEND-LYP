@@ -14,8 +14,9 @@ export interface RequestOptions {
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 const TOKEN_KEY = 'auth_token'
+const USER_KEY = 'auth_user'
 
-function getToken() {
+export function getToken() {
   return localStorage.getItem(TOKEN_KEY) || ''
 }
 
@@ -25,6 +26,20 @@ export function setToken(token: string) {
 
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY)
+  localStorage.removeItem(USER_KEY)
+}
+
+export function getUser() {
+  const raw = localStorage.getItem(USER_KEY)
+  try {
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+export function setUser(user: unknown) {
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
 }
 
 export async function request<T>(

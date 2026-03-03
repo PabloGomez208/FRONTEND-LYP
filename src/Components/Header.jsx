@@ -1,3 +1,5 @@
+import AuthButtons from './AuthButtons.jsx'
+
 export default function Header() {
   return (
     <header style={{
@@ -24,10 +26,15 @@ export default function Header() {
         }}>🐾</span>
         <strong>Latidos & Patitas</strong>
       </div>
-      <nav style={{ display: 'flex', gap: 16 }}>
-        <a href="#" style={{ color: '#fff' }}>Inicio</a>
-        <a href="#" style={{ color: '#fff' }}>Adopción</a>
-        <a href="#" style={{ color: '#fff' }}>Servicios</a>
+      <nav style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <a href="#inicio" style={{ color: '#fff' }}>Inicio</a>
+        <a href="#adopcion" style={{ color: '#fff' }}>Adopción</a>
+        <a href="#citas" style={{ color: '#fff' }}>Citas</a>
+        <a href="#nosotros" style={{ color: '#fff' }}>Nosotros</a>
+        <a href="#contacto" style={{ color: '#fff' }}>Contacto</a>
+        <div style={{ marginLeft: 8 }}>
+          <AuthButtons />
+        </div>
       </nav>
     </header>
   )

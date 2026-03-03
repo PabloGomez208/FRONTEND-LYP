@@ -14,6 +14,7 @@ export default function Registro() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [phone, setPhone] = useState('')
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -25,8 +26,11 @@ export default function Registro() {
     }
     setLoading(true)
     try {
-      const user = await register({ name, email, password, password_confirmation: password2 })
+      const user = await register({ name, email, password, password_confirmation: password2, telefono: phone })
       setSuccess(user ? 'Registro exitoso' : 'Registro completado')
+      if (user) {
+        window.location.hash = 'inicio'
+      }
     } catch (err) {
       setError(typeof err?.message === 'string' ? err.message : 'Error al registrarse')
     } finally {
@@ -37,7 +41,7 @@ export default function Registro() {
   return (
     <div>
       <Header />
-      <Hero>
+      <Hero full>
         <div className="auth-card">
           <h2 className="auth-title">Crear cuenta</h2>
           <form onSubmit={handleSubmit}>
@@ -57,6 +61,14 @@ export default function Registro() {
               placeholder="tucorreo@dominio.com"
               name="email"
               required
+            />
+            <TextInput
+              label="Teléfono"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="3001234567"
+              name="telefono"
             />
             <TextInput
               label="Contraseña"

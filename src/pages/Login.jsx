@@ -21,6 +21,9 @@ export default function Login() {
     try {
       const user = await login({ email, password })
       setSuccess(user ? 'Inicio de sesión exitoso' : 'Inicio de sesión completado')
+      if (user) {
+        window.location.hash = 'inicio'
+      }
     } catch (err) {
       setError(typeof err?.message === 'string' ? err.message : 'Error al iniciar sesión')
     } finally {
@@ -31,7 +34,7 @@ export default function Login() {
   return (
     <div>
       <Header />
-      <Hero>
+      <Hero full>
         <div className="auth-card">
           <h2 className="auth-title">Iniciar sesión</h2>
           <form onSubmit={handleSubmit}>
