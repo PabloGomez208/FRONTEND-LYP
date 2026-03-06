@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import Header from '../Components/Header.jsx'
 import Hero from '../Components/Hero.jsx'
 import Button from '../Components/Button.jsx'
+import { listarMascotas } from '../lib/api/adopcion'
 
 const mascotas = [
   {
@@ -30,6 +32,24 @@ const mascotas = [
 ]
 
 export default function Adopcion() {
+  const [items, setItems] = useState(mascotas)
+  useEffect(() => {
+    listarMascotas()
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((m) => ({
+            nombre: m.nombre ?? 'Mascota',
+            especie: m.especie ?? 'Desconocida',
+            raza: '',
+            edad: '',
+            descripcion: '',
+            foto: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop'
+          }))
+          setItems(mapped)
+        }
+      })
+      .catch(() => {})
+  }, [])
   return (
     <div>
       <Header />
@@ -56,7 +76,7 @@ export default function Adopcion() {
           maxWidth: 1100,
           margin: '0 auto'
         }}>
-          {mascotas.map((m) => (
+          {items.map((m) => (
             <article key={m.nombre} style={{
               background: '#f5f5f5',
               borderRadius: 16,

@@ -6,6 +6,16 @@ import Inicio from './pages/inicio.jsx'
 import Adopcion from './pages/Adopcion.jsx'
 import Citas from './pages/Citas.jsx'
 import SolicitudAdopcion from './pages/SolicitudAdopcion.jsx'
+import Nosotros from './pages/Nosotros.jsx'
+import Contacto from './pages/Contacto.jsx'
+import MisMascotas from './pages/MisMascotas.jsx'
+import MisCitas from './pages/MisCitas.jsx'
+import EditarPerfil from './pages/EditarPerfil.jsx'
+import AdminUsuarios from './pages/AdminUsuarios.jsx'
+import AdminCitas from './pages/AdminCitas.jsx'
+import AdminMascotas from './pages/AdminMascotas.jsx'
+import VetDisponibilidad from './pages/VetDisponibilidad.jsx'
+import VetSolicitudes from './pages/VetSolicitudes.jsx'
 
 function App() {
   const initial = typeof window !== 'undefined' && window.location.hash
@@ -31,6 +41,16 @@ function App() {
       {view === 'login' && <Login />}
       {view === 'registro' && <Registro />}
       {view === 'solicitud-adopcion' && <SolicitudAdopcion />}
+      {view === 'nosotros' && <Nosotros />}
+      {view === 'contacto' && <Contacto />}
+      {view === 'mis-mascotas' && <MisMascotas />}
+      {view === 'mis-citas' && <MisCitas />}
+      {view === 'editar-perfil' && <EditarPerfil />}
+      {view === 'admin-usuarios' && <AdminUsuarios />}
+      {view === 'admin-citas' && <AdminCitas />}
+      {view === 'admin-mascotas' && <AdminMascotas />}
+      {view === 'vet-disponibilidad' && <VetDisponibilidad />}
+      {view === 'vet-solicitudes' && <VetSolicitudes />}
     </div>
   )
 }

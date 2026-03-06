@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Header from '../Components/Header.jsx'
 import Hero from '../Components/Hero.jsx'
 import TextInput from '../Components/TextInput.jsx'
 import Button from '../Components/Button.jsx'
-import { crearCita, listarCitas, listarDisponibilidad } from '../lib/api/citas'
+import { crearCita, listarCitas, listarDisponibilidad, eliminarCita, cambiarEstadoCita, listarCitasAdmin, listarCitasActivasAdmin } from '../lib/api/citas'
+import { getUser } from '../lib/api/http'
 
 export default function Citas() {
   const [nombre, setNombre] = useState('')
@@ -17,6 +18,11 @@ export default function Citas() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [citas, setCitas] = useState([])
+  const [allSlots, setAllSlots] = useState([])
+  const [adminLoading, setAdminLoading] = useState(false)
+  const [activosList, setActivosList] = useState([])
+  const u = typeof window !== 'undefined' ? getUser() : null
+  const adminMode = (u?.role ?? '').toLowerCase() === 'admin'
 
   async function cargarCitas() {
     try {
@@ -33,6 +39,93 @@ export default function Citas() {
       setSlots(Array.isArray(data) ? data : [])
     } catch {
       setError('No se pudo cargar disponibilidad')
+    }
+  }
+
+  async function cargarAdminData() {
+    setAdminLoading(true)
+    try {
+      const [c, d] = await Promise.all([
+        listarCitasAdmin().catch(() => []),
+        listarDisponibilidad().catch(() => []),
+      ])
+      setCitas(Array.isArray(c) ? c : [])
+      setAllSlots(Array.isArray(d) ? d : [])
+      try {
+        const a = await listarCitasActivasAdmin()
+        setActivosList(Array.isArray(a) ? a : [])
+      } catch {
+        setActivosList([])
+      }
+    } catch {
+      setError('No se pudieron cargar datos de citas')
+    } finally {
+      setAdminLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (adminMode) {
+      cargarAdminData()
+    }
+  }, [adminMode])
+
+  const activos = useMemo(() => {
+    if (Array.isArray(activosList) && activosList.length > 0) {
+      return activosList
+    }
+    if (!Array.isArray(citas) || citas.length === 0) return []
+    const now = new Date()
+    function parseSlot(c) {
+      if (c?.fecha && c?.hora) {
+        return { fecha: c.fecha, inicio: c.hora, fin: c.hora }
+      }
+      const idd = c?.id_disponibilidad
+      const s = Array.isArray(allSlots) ? allSlots.find((x) => x.id_disponibilidad === idd) : null
+      if (!s) return null
+      return { fecha: s.fecha, inicio: s.hora_inicio, fin: s.hora_fin }
+    }
+    function isNow(fecha, hIni, hFin) {
+      if (!fecha || !hIni) return false
+      const [Y, M, D] = fecha.split('-').map((n) => Number(n))
+      const [h1, m1] = String(hIni).split(':').map((n) => Number(n))
+      const [h2, m2] = String(hFin || hIni).split(':').map((n) => Number(n))
+      const start = new Date(Y, (M - 1), D, h1, m1, 0)
+      const end = new Date(Y, (M - 1), D, h2, m2, 0)
+      return now >= start && now <= end
+    }
+    return citas.filter((c) => {
+      const estado = (c?.estado ?? '').toLowerCase()
+      if (estado === 'rechazada') return false
+      const slot = parseSlot(c)
+      if (!slot) return estado === 'aceptada'
+      return isNow(slot.fecha, slot.inicio, slot.fin) || estado === 'aceptada'
+    })
+  }, [citas, allSlots])
+
+  async function adminEliminar(id) {
+    setAdminLoading(true)
+    setError('')
+    try {
+      await eliminarCita(Number(id))
+      await cargarAdminData()
+    } catch {
+      setError('No se pudo eliminar la cita')
+    } finally {
+      setAdminLoading(false)
+    }
+  }
+
+  async function adminEstado(id, estado) {
+    setAdminLoading(true)
+    setError('')
+    try {
+      await cambiarEstadoCita(Number(id), estado)
+      await cargarAdminData()
+    } catch {
+      setError('No se pudo actualizar el estado')
+    } finally {
+      setAdminLoading(false)
     }
   }
 
@@ -76,6 +169,41 @@ export default function Citas() {
           </div>
         </div>
       </Hero>
+      {adminMode ? (
+        <section style={{ padding: '24px 16px', background: '#fff' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <h3 style={{ margin: '0 0 12px' }}>Citas activas ahora</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+              {activos.map((c, i) => {
+                const id = c.id ?? c.id_cita ?? i
+                return (
+                  <div key={id} style={{ background: '#f5f5f5', borderRadius: 12, padding: 12 }}>
+                    <strong>{c.motivo || 'Sin motivo'}</strong>
+                    <div style={{ marginTop: 6, color: '#374151' }}>
+                      {c.fecha ? <div>Fecha: {c.fecha}</div> : null}
+                      {c.hora ? <div>Hora: {c.hora}</div> : null}
+                      {c.estado ? <div>Estado: {c.estado}</div> : null}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                      <select
+                        defaultValue={c.estado ?? 'pendiente'}
+                        onChange={(e) => adminEstado(id, e.target.value)}
+                        style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc' }}
+                      >
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="cancelada">Cancelada</option>
+                      </select>
+                      <Button onClick={() => adminEliminar(id)} disabled={adminLoading}>Eliminar</Button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {error ? <p className="auth-feedback" style={{ color: 'crimson' }}>{error}</p> : null}
+          </div>
+        </section>
+      ) : null}
       <section style={{ padding: '24px 16px', background: '#f3f4f6' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 6px 18px rgba(0,0,0,0.12)' }}>

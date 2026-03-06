@@ -37,3 +37,15 @@ export async function crearSolicitudAdopcion(payload: Partial<SolicitudAdopcionP
   }
   return await request('POST', '/solicitudes-adopcion', body)
 }
+
+export async function crearMascota(payload: Partial<Mascota & { descripcion?: string; raza?: string; edad?: string }>) {
+  return await request('POST', '/mascotas', payload, { auth: true })
+}
+
+export async function actualizarMascota(id: number, payload: Partial<Mascota & { descripcion?: string; raza?: string; edad?: string }>) {
+  return await request('PUT', `/mascotas/${id}`, payload, { auth: true })
+}
+
+export async function eliminarMascota(id: number) {
+  return await request('DELETE', `/mascotas/${id}`, undefined, { auth: true })
+}

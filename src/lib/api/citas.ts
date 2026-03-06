@@ -31,6 +31,14 @@ export async function listarCitas(): Promise<Cita[]> {
   return await request<Cita[]>('GET', '/citas')
 }
 
+export async function listarCitasAdmin(): Promise<any[]> {
+  return await request<any[]>('GET', '/admin/citas', undefined, { auth: true })
+}
+
+export async function listarCitasActivasAdmin(): Promise<any[]> {
+  return await request<any[]>('GET', '/admin/citas-activas', undefined, { auth: true })
+}
+
 export interface Disponibilidad {
   id_disponibilidad: number
   id_veterinario?: number
@@ -43,4 +51,32 @@ export interface Disponibilidad {
 export async function listarDisponibilidad(estado?: string): Promise<Disponibilidad[]> {
   const path = estado ? `/disponibilidad-citas?estado=${encodeURIComponent(estado)}` : '/disponibilidad-citas'
   return await request<Disponibilidad[]>('GET', path)
+}
+
+export async function crearDisponibilidad(payload: Partial<Disponibilidad>) {
+  return await request('POST', '/disponibilidad-citas', payload, { auth: true })
+}
+
+export async function actualizarDisponibilidad(id: number, payload: Partial<Disponibilidad>) {
+  return await request('PUT', `/disponibilidad-citas/${id}`, payload, { auth: true })
+}
+
+export async function eliminarDisponibilidad(id: number) {
+  return await request('DELETE', `/disponibilidad-citas/${id}`, undefined, { auth: true })
+}
+
+export async function actualizarCita(id: number, payload: Partial<CitaPayload>) {
+  return await request('PUT', `/citas/${id}`, payload, { auth: true })
+}
+
+export async function eliminarCita(id: number) {
+  return await request('DELETE', `/citas/${id}`, undefined, { auth: true })
+}
+
+export async function cambiarEstadoCita(id: number, estado: string) {
+  try {
+    return await request('PATCH', `/citas/${id}/estado`, { estado }, { auth: true })
+  } catch {
+    return await request('PATCH', `/citas/${id}`, { estado }, { auth: true })
+  }
 }
