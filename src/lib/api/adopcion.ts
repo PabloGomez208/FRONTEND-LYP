@@ -19,7 +19,16 @@ export interface SolicitudAdopcionPayload {
 }
 
 export async function listarMascotas(): Promise<Mascota[]> {
-  return await request<Mascota[]>('GET', '/mascotas')
+  try {
+    return await request<Mascota[]>('GET', '/mascotas')
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request<Mascota[]>('GET', '/pets')
+    }
+    throw err
+  }
 }
 
 export async function crearSolicitudAdopcion(payload: Partial<SolicitudAdopcionPayload>) {
@@ -35,17 +44,53 @@ export async function crearSolicitudAdopcion(payload: Partial<SolicitudAdopcionP
     fecha_solicitud: payload.fecha_solicitud,
     estado: payload.estado ?? 'pendiente',
   }
-  return await request('POST', '/solicitudes-adopcion', body)
+  try {
+    return await request('POST', '/solicitudes-adopcion', body)
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('POST', '/adoption-requests', body)
+    }
+    throw err
+  }
 }
 
 export async function crearMascota(payload: Partial<Mascota & { descripcion?: string; raza?: string; edad?: string }>) {
-  return await request('POST', '/mascotas', payload, { auth: true })
+  try {
+    return await request('POST', '/mascotas', payload, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('POST', '/pets', payload, { auth: true })
+    }
+    throw err
+  }
 }
 
 export async function actualizarMascota(id: number, payload: Partial<Mascota & { descripcion?: string; raza?: string; edad?: string }>) {
-  return await request('PUT', `/mascotas/${id}`, payload, { auth: true })
+  try {
+    return await request('PUT', `/mascotas/${id}`, payload, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('PUT', `/pets/${id}`, payload, { auth: true })
+    }
+    throw err
+  }
 }
 
 export async function eliminarMascota(id: number) {
-  return await request('DELETE', `/mascotas/${id}`, undefined, { auth: true })
+  try {
+    return await request('DELETE', `/mascotas/${id}`, undefined, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('DELETE', `/pets/${id}`, undefined, { auth: true })
+    }
+    throw err
+  }
 }

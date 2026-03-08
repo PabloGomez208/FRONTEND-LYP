@@ -24,19 +24,55 @@ export async function crearCita(payload: Partial<CitaPayload>): Promise<Cita> {
     id_disponibilidad: payload.id_disponibilidad,
     estado: payload.estado,
   }
-  return await request<Cita>('POST', '/citas', body)
+  try {
+    return await request<Cita>('POST', '/citas', body)
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request<Cita>('POST', '/appointments', body)
+    }
+    throw err
+  }
 }
 
 export async function listarCitas(): Promise<Cita[]> {
-  return await request<Cita[]>('GET', '/citas')
+  try {
+    return await request<Cita[]>('GET', '/citas')
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request<Cita[]>('GET', '/appointments')
+    }
+    throw err
+  }
 }
 
 export async function listarCitasAdmin(): Promise<any[]> {
-  return await request<any[]>('GET', '/admin/citas', undefined, { auth: true })
+  try {
+    return await request<any[]>('GET', '/admin/citas', undefined, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request<any[]>('GET', '/admin/appointments', undefined, { auth: true })
+    }
+    throw err
+  }
 }
 
 export async function listarCitasActivasAdmin(): Promise<any[]> {
-  return await request<any[]>('GET', '/admin/citas-activas', undefined, { auth: true })
+  try {
+    return await request<any[]>('GET', '/admin/citas-activas', undefined, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request<any[]>('GET', '/admin/active-appointments', undefined, { auth: true })
+    }
+    throw err
+  }
 }
 
 export interface Disponibilidad {
@@ -50,33 +86,101 @@ export interface Disponibilidad {
 
 export async function listarDisponibilidad(estado?: string): Promise<Disponibilidad[]> {
   const path = estado ? `/disponibilidad-citas?estado=${encodeURIComponent(estado)}` : '/disponibilidad-citas'
-  return await request<Disponibilidad[]>('GET', path)
+  try {
+    return await request<Disponibilidad[]>('GET', path)
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      const alt = estado ? `/availability?estado=${encodeURIComponent(estado)}` : '/availability'
+      return await request<Disponibilidad[]>('GET', alt)
+    }
+    throw err
+  }
 }
 
 export async function crearDisponibilidad(payload: Partial<Disponibilidad>) {
-  return await request('POST', '/disponibilidad-citas', payload, { auth: true })
+  try {
+    return await request('POST', '/disponibilidad-citas', payload, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('POST', '/availability', payload, { auth: true })
+    }
+    throw err
+  }
 }
 
 export async function actualizarDisponibilidad(id: number, payload: Partial<Disponibilidad>) {
-  return await request('PUT', `/disponibilidad-citas/${id}`, payload, { auth: true })
+  try {
+    return await request('PUT', `/disponibilidad-citas/${id}`, payload, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('PUT', `/availability/${id}`, payload, { auth: true })
+    }
+    throw err
+  }
 }
 
 export async function eliminarDisponibilidad(id: number) {
-  return await request('DELETE', `/disponibilidad-citas/${id}`, undefined, { auth: true })
+  try {
+    return await request('DELETE', `/disponibilidad-citas/${id}`, undefined, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('DELETE', `/availability/${id}`, undefined, { auth: true })
+    }
+    throw err
+  }
 }
 
 export async function actualizarCita(id: number, payload: Partial<CitaPayload>) {
-  return await request('PUT', `/citas/${id}`, payload, { auth: true })
+  try {
+    return await request('PUT', `/citas/${id}`, payload, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('PUT', `/appointments/${id}`, payload, { auth: true })
+    }
+    throw err
+  }
 }
 
 export async function eliminarCita(id: number) {
-  return await request('DELETE', `/citas/${id}`, undefined, { auth: true })
+  try {
+    return await request('DELETE', `/citas/${id}`, undefined, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request('DELETE', `/appointments/${id}`, undefined, { auth: true })
+    }
+    throw err
+  }
 }
 
 export async function cambiarEstadoCita(id: number, estado: string) {
   try {
     return await request('PATCH', `/citas/${id}/estado`, { estado }, { auth: true })
   } catch {
-    return await request('PATCH', `/citas/${id}`, { estado }, { auth: true })
+    try {
+      return await request('PATCH', `/citas/${id}`, { estado }, { auth: true })
+    } catch (err: any) {
+      const status = err?.status
+      const msg = String(err?.message || '').toLowerCase()
+      if (status === 404 || status === 405 || msg.includes('not found')) {
+        try {
+          return await request('PATCH', `/appointments/${id}/status`, { estado }, { auth: true })
+        } catch {
+          return await request('PATCH', `/appointments/${id}`, { estado }, { auth: true })
+        }
+      }
+      throw err
+    }
   }
 }

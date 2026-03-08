@@ -21,7 +21,18 @@ function normalizeUser(raw: any): User | null {
 
 export async function login(payload: AuthLoginPayload): Promise<User | null> {
   try {
-    const data = await request<AuthResponse>('POST', '/login', payload)
+    let data: AuthResponse | null = null
+    try {
+      data = await request<AuthResponse>('POST', '/login', payload)
+    } catch (err: any) {
+      const status = err?.status
+      const msg = String(err?.message || '').toLowerCase()
+      if (status === 404 || status === 405 || msg.includes('not found')) {
+        data = await request<AuthResponse>('POST', '/auth/login', payload)
+      } else {
+        throw err
+      }
+    }
     const token = extractToken(data)
     const user = normalizeUser(data.user)
     if (token) setToken(token)
