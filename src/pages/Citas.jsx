@@ -42,6 +42,7 @@ export default function Citas() {
     }
   }
 
+
   async function cargarAdminData() {
     setAdminLoading(true)
     try {
@@ -156,30 +157,24 @@ export default function Citas() {
     <div>
       <Header />
       <Hero full>
-        <div style={{ width: '100%', maxWidth: 1000 }}>
-          <div style={{
-            background: 'rgba(17,17,17,0.75)',
-            color: '#fff',
-            borderRadius: 16,
-            padding: 18,
-            textAlign: 'center'
-          }}>
+        <div className="container" style={{ maxWidth: 1000 }}>
+          <div className="card bg-dark text-light" style={{ textAlign: 'center', background: 'rgba(17,17,17,0.75)' }}>
             <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>Citas</h2>
-            <p style={{ marginTop: 6, color: '#e5e7eb' }}>Atención veterinaria de calidad para tu mascota.</p>
+            <p className="mt-1 text-light">Atención veterinaria de calidad para tu mascota.</p>
           </div>
         </div>
       </Hero>
       {adminMode ? (
-        <section style={{ padding: '24px 16px', background: '#fff' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <section className="section section--light">
+          <div className="container">
             <h3 style={{ margin: '0 0 12px' }}>Citas activas ahora</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12 }}>
+            <div className="grid grid-fit">
               {activos.map((c, i) => {
                 const id = c.id ?? c.id_cita ?? i
                 return (
-                  <div key={id} style={{ background: '#f5f5f5', borderRadius: 12, padding: 12 }}>
+                  <div key={id} className="card" style={{ background: '#f5f5f5', padding: 12 }}>
                     <strong>{c.motivo || 'Sin motivo'}</strong>
-                    <div style={{ marginTop: 6, color: '#374151' }}>
+                    <div className="mt-1 text-dark">
                       {c.fecha ? <div>Fecha: {c.fecha}</div> : null}
                       {c.hora ? <div>Hora: {c.hora}</div> : null}
                       {c.estado ? <div>Estado: {c.estado}</div> : null}
@@ -188,7 +183,7 @@ export default function Citas() {
                       <select
                         defaultValue={c.estado ?? 'pendiente'}
                         onChange={(e) => adminEstado(id, e.target.value)}
-                        style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ccc' }}
+                        className="input-field"
                       >
                         <option value="pendiente">Pendiente</option>
                         <option value="confirmada">Confirmada</option>
@@ -204,9 +199,9 @@ export default function Citas() {
           </div>
         </section>
       ) : null}
-      <section style={{ padding: '24px 16px', background: '#f3f4f6' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 6px 18px rgba(0,0,0,0.12)' }}>
+      <section className="section section--light">
+        <div className="container grid grid-2">
+          <div className="card">
             <h3 style={{ margin: '0 0 10px' }}>Información de Citas</h3>
             <ul style={{ margin: 0, paddingLeft: 18 }}>
               <li>Consulta general</li>
@@ -216,27 +211,27 @@ export default function Citas() {
               <li>Urgencias</li>
             </ul>
             <h4 style={{ margin: '16px 0 8px' }}>Horario de Atención</h4>
-            <div style={{ color: '#374151' }}>
+            <div className="text-dark">
               <div>Lunes a Viernes: 8:00 AM - 7:00 PM</div>
               <div>Sábados: 9:00 AM - 5:00 PM</div>
               <div>Domingos: 10:00 AM - 2:00 PM (Solo emergencias)</div>
             </div>
           </div>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 6px 18px rgba(0,0,0,0.12)' }}>
+          <div className="card">
             <h3 style={{ margin: '0 0 12px' }}>Agenda tu cita</h3>
             <form onSubmit={onSubmit}>
               <TextInput label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} name="nombre" required />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                <label style={{ fontSize: 14 }}>Tipo de mascota</label>
-                <select value={tipoMascota} onChange={(e) => setTipoMascota(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}>
+              <div className="input-group">
+                <label className="input-label">Tipo de mascota</label>
+                <select value={tipoMascota} onChange={(e) => setTipoMascota(e.target.value)} className="input-field">
                   <option>Perro</option>
                   <option>Gato</option>
                   <option>Otro</option>
                 </select>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                <label style={{ fontSize: 14 }}>Tipo de servicio</label>
-                <select value={tipoServicio} onChange={(e) => setTipoServicio(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}>
+              <div className="input-group">
+                <label className="input-label">Tipo de servicio</label>
+                <select value={tipoServicio} onChange={(e) => setTipoServicio(e.target.value)} className="input-field">
                   <option>Consulta general</option>
                   <option>Vacunación</option>
                   <option>Desparasitación</option>
@@ -246,13 +241,13 @@ export default function Citas() {
               </div>
               <TextInput label="Fecha de la cita" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} name="fecha" required />
               <TextInput label="Hora de la cita" type="time" value={hora} onChange={(e) => setHora(e.target.value)} name="hora" required />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                <label style={{ fontSize: 14 }}>Disponibilidad</label>
+              <div className="input-group">
+                <label className="input-label">Disponibilidad</label>
                 <select
                   value={idDisp}
                   onChange={(e) => setIdDisp(e.target.value)}
                   onFocus={() => slots.length === 0 ? cargarDisponibilidad() : null}
-                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}
+                  className="input-field"
                   required
                 >
                   <option value="">Selecciona un horario disponible</option>
@@ -272,14 +267,14 @@ export default function Citas() {
           </div>
         </div>
       </section>
-      <section style={{ padding: '24px 16px', minHeight: '60vh' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <section className="section" style={{ minHeight: '60vh' }}>
+        <div className="container">
           <h3 style={{ margin: '0 0 12px' }}>Tus citas</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+          <div className="grid grid-fit">
             {citas.map((c, i) => (
-              <div key={c?.id ?? i} style={{ background: '#f5f5f5', borderRadius: 12, padding: 12 }}>
+              <div key={c?.id ?? i} className="card" style={{ background: '#f5f5f5', padding: 12 }}>
                 <strong>{c.motivo || 'Sin motivo'}</strong>
-                {c.id_cliente ? <div style={{ marginTop: 6, color: '#374151' }}>Cliente: {c.id_cliente}</div> : null}
+                {c.id_cliente ? <div className="mt-1 text-dark">Cliente: {c.id_cliente}</div> : null}
               </div>
             ))}
           </div>

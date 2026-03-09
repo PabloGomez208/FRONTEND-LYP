@@ -1,24 +1,56 @@
 import { useEffect, useState } from 'react'
 import Header from '../Components/Header.jsx'
 import Hero from '../Components/Hero.jsx'
-import { listarCitas } from '../lib/api/citas'
+import Button from '../Components/Button.jsx'
+import { listarCitas, eliminarCita, listarCitasPorVeterinario, listarDisponibilidad } from '../lib/api/citas'
 import { getUser } from '../lib/api/http'
 
 export default function MisCitas() {
   const [items, setItems] = useState([])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    listarCitas()
+    const u = getUser()
+    const uid = (u?.id ?? u?.id_usuario ?? u?.id_veterinario)
+    const fetch = u?.role === 'veterinario' ? listarCitasPorVeterinario(uid) : listarCitas()
+    fetch
       .then((data) => {
         const list = Array.isArray(data) ? data : []
-        const u = getUser()
-        const uid = (u?.id ?? u?.id_usuario)
-        const mine = list.filter((c) => c && c.id_cliente === uid)
+        let mine
+        if (u?.role === 'veterinario') {
+          mine = list.filter((c) => c && c.id_veterinario === uid)
+        } else {
+          mine = list.filter((c) => c && c.id_cliente === uid)
+        }
         setItems(mine.length > 0 ? mine : list)
       })
       .catch(() => setError('No se pudieron cargar tus citas'))
   }, [])
+
+  async function onCancel(id) {
+    setLoading(true)
+    setError('')
+    try {
+      await eliminarCita(Number(id))
+      // refresh both list and availability in case a slot freed up
+      const data = await listarCitas()
+      const list = Array.isArray(data) ? data : []
+      const u = getUser()
+      const uid = (u?.id ?? u?.id_usuario ?? u?.id_veterinario)
+      let mine
+      if (u?.role === 'veterinario') {
+        mine = list.filter((c) => c && c.id_veterinario === uid)
+      } else {
+        mine = list.filter((c) => c && c.id_cliente === uid)
+      }
+      setItems(mine.length > 0 ? mine : list)
+      // try refreshing availability as well (client code elsewhere may depend on it)
+      try { await listarDisponibilidad() } catch {} // ignore
+    } catch {
+      setError('No se pudo cancelar la cita')
+    } finally { setLoading(false) }
+  }
 
   return (
     <div>
@@ -47,6 +79,9 @@ export default function MisCitas() {
               <strong>{(c && c.motivo) || 'Sin motivo'}</strong>
               {c && c.fecha ? <div style={{ marginTop: 6, color: '#374151' }}>Fecha: {c.fecha}</div> : null}
               {c && c.hora ? <div style={{ marginTop: 4, color: '#374151' }}>Hora: {c.hora}</div> : null}
+              <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                <Button onClick={() => onCancel((c && c.id) ?? i)} disabled={loading}>Cancelar</Button>
+              </div>
             </div>
           ))}
         </div>

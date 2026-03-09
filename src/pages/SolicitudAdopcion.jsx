@@ -3,18 +3,20 @@ import Header from '../Components/Header.jsx'
 import Hero from '../Components/Hero.jsx'
 import TextInput from '../Components/TextInput.jsx'
 import Button from '../Components/Button.jsx'
-import { listarMascotas, crearSolicitudAdopcion } from '../lib/api/adopcion'
+import { listarMascotas, crearSolicitudAdopcion, adoptarMascota } from '../lib/api/adopcion'
 import { getUser } from '../lib/api/http'
 
 export default function SolicitudAdopcion() {
   const [mascotas, setMascotas] = useState([])
   const [idMascota, setIdMascota] = useState('')
-  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
+  // fecha_solicitud is assigned by server, no need to track on client
   const [motivo, setMotivo] = useState('')
   const [direccion, setDireccion] = useState('')
   const [tieneMascotas, setTieneMascotas] = useState(false)
   const [experiencia, setExperiencia] = useState('')
   const [tipoMascota, setTipoMascota] = useState('Perro')
+  const user = getUser()
+  const isClient = (user?.role ?? '').toLowerCase() === 'cliente'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -31,11 +33,13 @@ export default function SolicitudAdopcion() {
     const q = hash.includes('?') ? hash.split('?')[1] : ''
     const params = new URLSearchParams(q)
     const fromUrl = params.get('mascota') || ''
+    const especieParam = params.get('especie') || ''
     let fromStorage = ''
     try {
       fromStorage = localStorage.getItem('selected_mascota_nombre') || ''
       const especie = localStorage.getItem('selected_mascota_especie') || ''
-      if (especie) setTipoMascota(especie)
+      if (especieParam) setTipoMascota(especieParam)
+      else if (especie) setTipoMascota(especie)
     } catch (e) { void e }
     setPresetName(fromUrl || fromStorage)
   }, [])
@@ -66,15 +70,18 @@ export default function SolicitudAdopcion() {
     }
     setLoading(true)
     try {
-      await crearSolicitudAdopcion({
-        id_mascota: Number(idMascota),
+      // prefer the new adoptar endpoint; fallback happens inside the helper
+      const result = await adoptarMascota(Number(idMascota), {
         motivo,
         direccion,
         tiene_mascotas: tieneMascotas,
         experiencia,
-        fecha_solicitud: fecha,
       })
-      setSuccess('Solicitud enviada correctamente')
+      let msg = 'Solicitud enviada correctamente'
+      if (result?.fecha_solicitud) {
+        msg += ` (fecha: ${result.fecha_solicitud})`
+      }
+      setSuccess(msg)
       setIdMascota('')
       setMotivo('')
       setDireccion('')
@@ -108,21 +115,38 @@ export default function SolicitudAdopcion() {
         <div style={{ maxWidth: 800, margin: '0 auto', background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 6px 18px rgba(0,0,0,0.12)' }}>
           <h3 style={{ margin: '0 0 12px' }}>Solicitud de adopción</h3>
           <form onSubmit={onSubmit}>
+            {!isClient && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                <label style={{ fontSize: 14 }}>Tipo de mascota</label>
+                <select
+                  value={tipoMascota}
+                  onChange={(e) => setTipoMascota(e.target.value)}
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}
+                >
+                  <option>Perro</option>
+                  <option>Gato</option>
+                  <option>Otro</option>
+                </select>
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
               <label style={{ fontSize: 14 }}>Mascota</label>
               <select
-                value={tipoMascota}
-                onChange={(e) => {
-                  const v = e.target.value
-                  setTipoMascota(v)
-                  const match = mascotas.find((m) => (m.especie ?? '').toLowerCase() === v.toLowerCase())
-                  const id = match ? (match.id ?? match.id_mascota) : ''
-                  setIdMascota(id ? String(id) : '')
-                }}
+                value={idMascota}
+                onChange={(e) => setIdMascota(e.target.value)}
                 style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}
+                required
               >
-                <option>Perro</option>
-                <option>Gato</option>
+                <option value="">Selecciona una mascota</option>
+                {mascotas
+                  .filter((m) => !tipoMascota || (m.especie ?? '').toLowerCase() === tipoMascota.toLowerCase())
+                  .map((m) => {
+                    const id = m.id ?? m.id_mascota
+                    const name = m.nombre ?? 'Mascota'
+                    const especie = m.especie ?? ''
+                    return <option key={id ?? name} value={id ?? ''}>{name} {especie ? `• ${especie}` : ''}</option>
+                  })}
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
@@ -138,7 +162,6 @@ export default function SolicitudAdopcion() {
               <label style={{ fontSize: 14 }}>Experiencia</label>
               <textarea value={experiencia} onChange={(e) => setExperiencia(e.target.value)} name="experiencia" rows={4} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc', resize: 'vertical' }} />
             </div>
-            <TextInput label="Fecha de solicitud" type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} name="fecha_solicitud" required />
             <div className="auth-actions">
               <Button type="submit" disabled={loading}>{loading ? 'Enviando...' : 'Solicitar adopción'}</Button>
             </div>

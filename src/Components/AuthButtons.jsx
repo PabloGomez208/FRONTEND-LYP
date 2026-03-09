@@ -30,19 +30,8 @@ export default function AuthButtons() {
   if (!authed) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <a href="#registro" style={{
-          background: '#fff',
-          color: '#0f0f0f',
-          padding: '8px 12px',
-          borderRadius: 999,
-          border: '1px solid #e5e7eb'
-        }}>Registrarme</a>
-        <a href="#login" style={{
-          background: '#f59e0b',
-          color: '#0f0f0f',
-          padding: '8px 12px',
-          borderRadius: 999
-        }}>Iniciar Sesión</a>
+        <a href="#registro" className="btn btn-secondary" style={{ borderRadius: 999 }}>Registrarme</a>
+        <a href="#login" className="btn" style={{ background: '#f59e0b', color: '#0f0f0f', borderRadius: 999 }}>Iniciar Sesión</a>
       </div>
     )
   }
@@ -82,26 +71,31 @@ export default function AuthButtons() {
           {role === 'admin' ? (
             <div>
               <div style={{ padding: '8px 12px', fontSize: 12, color: '#9ca3af' }}>Administración</div>
-              <a href="#admin-usuarios" style={{ display: 'block', padding: '10px 12px', color: '#fff', textDecoration: 'none' }} onClick={() => setOpen(false)}>Usuarios</a>
-              <a href="#admin-citas" style={{ display: 'block', padding: '10px 12px', color: '#fff', textDecoration: 'none' }} onClick={() => setOpen(false)}>Citas</a>
-              <a href="#admin-mascotas" style={{ display: 'block', padding: '10px 12px', color: '#fff', textDecoration: 'none' }} onClick={() => setOpen(false)}>Mascotas</a>
+              <a href="#admin-usuarios" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Usuarios</a>
+              <a href="#admin-citas" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Citas</a>
+              <a href="#admin-mascotas" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Mascotas</a>
+              <a href="#admin-mensajes" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Mensajes</a>
+              <a href="#admin-solicitudes" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Solicitudes</a>
               <div style={{ height: 1, background: '#1f2937' }} />
             </div>
           ) : null}
           {role === 'veterinario' ? (
             <div>
               <div style={{ padding: '8px 12px', fontSize: 12, color: '#9ca3af' }}>Veterinario</div>
-              <a href="#vet-disponibilidad" style={{ display: 'block', padding: '10px 12px', color: '#fff', textDecoration: 'none' }} onClick={() => setOpen(false)}>Disponibilidad</a>
-              <a href="#vet-solicitudes" style={{ display: 'block', padding: '10px 12px', color: '#fff', textDecoration: 'none' }} onClick={() => setOpen(false)}>Solicitudes de cita</a>
+              <a href="#vet-disponibilidad" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Disponibilidad</a>
+              <a href="#mis-citas" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Mis citas</a>
+              <a href="#vet-solicitudes" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Pendientes</a>
               <div style={{ height: 1, background: '#1f2937' }} />
             </div>
           ) : null}
-          <a href="#mis-mascotas" style={{ display: 'block', padding: '10px 12px', color: '#fff', textDecoration: 'none' }} onClick={() => setOpen(false)}>Mascotas en posesión</a>
-          <a href="#mis-citas" style={{ display: 'block', padding: '10px 12px', color: '#fff', textDecoration: 'none' }} onClick={() => setOpen(false)}>Citas pedidas</a>
-          <a href="#editar-perfil" style={{ display: 'block', padding: '10px 12px', color: '#fff', textDecoration: 'none' }} onClick={() => setOpen(false)}>Editar perfil</a>
+          <a href="#mis-mascotas" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Mascotas en posesión</a>
+          <a href="#mis-citas" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Citas pedidas</a>
+          <a href="#editar-perfil" className="text-light" style={{ display: 'block', padding: '10px 12px', textDecoration: 'none' }} onClick={() => setOpen(false)}>Editar perfil</a>
           <button
-            onClick={() => {
-              logout()
+            onClick={async () => {
+              try {
+                await logout()
+              } catch {}
               setAuthed(false)
               setOpen(false)
               window.location.hash = 'inicio'

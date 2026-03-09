@@ -76,14 +76,43 @@ export async function request<T>(
   const contentType = res.headers.get('content-type') || ''
   const isJson = contentType.includes('application/json')
   if (!res.ok) {
+    // automatic handling of unauthorized responses
+    if (res.status === 401 || res.status === 403) {
+      try { clearToken() } catch {};
+      // redirect to login screen to force re‑auth
+      if (typeof window !== 'undefined') window.location.hash = 'login'
+    }
     let err: ApiError = { status: res.status, message: res.statusText }
     try {
       const data = isJson ? await res.json() : await res.text()
-      err = {
-        status: res.status,
-        message: typeof data === 'string' ? data : data?.message ?? res.statusText,
-        details: typeof data === 'string' ? undefined : data,
+      if (typeof data === 'string') {
+        err = { status: res.status, message: data }
+      } else {
+        let msg = data?.message ?? res.statusText
+        const errors = data?.errors
+        if (errors) {
+          if (Array.isArray(errors)) {
+            msg = errors.join('; ')
+          } else if (typeof errors === 'object') {
+            const parts: string[] = []
+            for (const k of Object.keys(errors)) {
+              const v = (errors as any)[k]
+              if (Array.isArray(v)) parts.push(`${k}: ${v.join(', ')}`)
+              else if (v) parts.push(`${k}: ${String(v)}`)
+            }
+            if (parts.length > 0) msg = parts.join(' | ')
+          }
+        } else if (data?.error) {
+          msg = data.error
+        } else if (data?.detail) {
+          msg = data.detail
+        }
+        err = { status: res.status, message: String(msg), details: data }
       }
+      try {
+        // Surface server payload for debugging 4xx/5xx
+        console.error('API error', { path, status: res.status, data })
+      } catch {}
     } catch {}
     throw err
   }

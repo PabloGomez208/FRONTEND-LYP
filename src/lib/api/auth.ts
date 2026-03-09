@@ -110,7 +110,12 @@ export async function register(payload: AuthRegisterPayload): Promise<User | nul
   return user
 }
 
-export function logout() {
+export async function logout() {
+  try {
+    await request('POST', '/logout', undefined, { auth: true })
+  } catch {
+    // ignore any network errors
+  }
   clearToken()
 }
 

@@ -3,7 +3,7 @@ import Header from '../Components/Header.jsx'
 import Hero from '../Components/Hero.jsx'
 import TextInput from '../Components/TextInput.jsx'
 import Button from '../Components/Button.jsx'
-import { listarDisponibilidad, crearDisponibilidad, actualizarDisponibilidad, eliminarDisponibilidad } from '../lib/api/citas'
+import { listarDisponibilidad, crearDisponibilidad, actualizarDisponibilidad, eliminarDisponibilidad, cambiarEstadoDisponibilidad } from '../lib/api/citas'
 
 export default function VetDisponibilidad() {
   const [items, setItems] = useState([])
@@ -47,6 +47,12 @@ export default function VetDisponibilidad() {
     setLoading(true)
     setError('')
     try {
+      // if only the estado changed we can hit the lightweight PATCH endpoint
+      const original = items.find((d) => d.id_disponibilidad === id)
+      if (original && original.estado !== editEstado) {
+        await cambiarEstadoDisponibilidad(Number(id), editEstado)
+      }
+      // still update the remainder of the record in case fecha/hora were modified
       await actualizarDisponibilidad(Number(id), { fecha: editFecha, hora_inicio: editInicio, hora_fin: editFin, estado: editEstado })
       setEditId(null)
       await load()

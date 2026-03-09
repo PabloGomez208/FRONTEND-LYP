@@ -1,41 +1,49 @@
+import { useEffect, useState } from 'react'
 import AuthButtons from './AuthButtons.jsx'
+import { getUser } from '../lib/api/http'
 
 export default function Header() {
+  const [role, setRole] = useState(getUser()?.role ?? '')
+  useEffect(() => {
+    const i = setInterval(() => setRole(getUser()?.role ?? ''), 500)
+    return () => clearInterval(i)
+  }, [])
   return (
-    <header style={{
-      width: '100%',
-      backgroundColor: '#0f0f0f',
-      color: '#fff',
-      padding: '12px 20px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{
-          display: 'inline-flex',
-          width: 28,
-          height: 28,
-          borderRadius: '50%',
-          background: '#f59e0b',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontWeight: 700,
-          color: '#0f0f0f'
-        }}>🐾</span>
-        <strong>Latidos & Patitas</strong>
-      </div>
-      <nav style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <a href="#inicio" style={{ color: '#fff' }}>Inicio</a>
-        <a href="#adopcion" style={{ color: '#fff' }}>Adopción</a>
-        <a href="#citas" style={{ color: '#fff' }}>Citas</a>
-        <a href="#nosotros" style={{ color: '#fff' }}>Nosotros</a>
-        <a href="#contacto" style={{ color: '#fff' }}>Contacto</a>
-        <div style={{ marginLeft: 8 }}>
-          <AuthButtons />
+    <header className="bg-dark text-light" style={{ padding: '12px 20px' }}>
+      <div className="container" style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="logo">🐾</span>
+          <strong>Latidos & Patitas</strong>
         </div>
-      </nav>
+        <nav className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {role === 'admin' ? (
+            <>
+              <a href="#admin-usuarios" className="text-light">Usuarios</a>
+              <a href="#admin-citas" className="text-light">Citas</a>
+              <a href="#admin-mascotas" className="text-light">Mascotas</a>
+              <a href="#admin-solicitudes" className="text-light">Solicitudes</a>
+              <a href="#admin-mensajes" className="text-light">Mensajes</a>
+            </>
+          ) : role === 'veterinario' ? (
+            <>
+              <a href="#vet-disponibilidad" className="text-light">Disponibilidad</a>
+              <a href="#mis-citas" className="text-light">Mis citas</a>
+              <a href="#vet-solicitudes" className="text-light">Pendientes</a>
+            </>
+          ) : (
+            <>
+              <a href="#inicio" className="text-light">Inicio</a>
+              <a href="#adopcion" className="text-light">Adopción</a>
+              <a href="#citas" className="text-light">Citas</a>
+              <a href="#nosotros" className="text-light">Nosotros</a>
+              <a href="#contacto" className="text-light">Contacto</a>
+            </>
+          )}
+          <div style={{ marginLeft: 8 }}>
+            <AuthButtons />
+          </div>
+        </nav>
+      </div>
     </header>
   )
 }

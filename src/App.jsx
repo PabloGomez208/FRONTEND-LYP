@@ -16,6 +16,8 @@ import AdminCitas from './pages/AdminCitas.jsx'
 import AdminMascotas from './pages/AdminMascotas.jsx'
 import VetDisponibilidad from './pages/VetDisponibilidad.jsx'
 import VetSolicitudes from './pages/VetSolicitudes.jsx'
+import AdminMensajes from './pages/AdminMensajes.jsx'
+import AdminSolicitudes from './pages/AdminSolicitudes.jsx'
 
 function App() {
   const initial = typeof window !== 'undefined' && window.location.hash
@@ -49,6 +51,8 @@ function App() {
       {view === 'admin-usuarios' && <AdminUsuarios />}
       {view === 'admin-citas' && <AdminCitas />}
       {view === 'admin-mascotas' && <AdminMascotas />}
+      {view === 'admin-mensajes' && <AdminMensajes />}
+      {view === 'admin-solicitudes' && <AdminSolicitudes />}
       {view === 'vet-disponibilidad' && <VetDisponibilidad />}
       {view === 'vet-solicitudes' && <VetSolicitudes />}
     </div>

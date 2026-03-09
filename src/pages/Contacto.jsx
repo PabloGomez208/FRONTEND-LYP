@@ -3,10 +3,12 @@ import Header from '../Components/Header.jsx'
 import Hero from '../Components/Hero.jsx'
 import TextInput from '../Components/TextInput.jsx'
 import Button from '../Components/Button.jsx'
+import { request } from '../lib/api/http'
 
 export default function Contacto() {
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
+  const [asunto, setAsunto] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -18,12 +20,32 @@ export default function Contacto() {
     setSuccess('')
     setLoading(true)
     try {
-      setSuccess('Mensaje enviado correctamente')
+      const body = { nombre, email, mensaje }
+      if (asunto) body.asunto = asunto
+      // primary endpoint
+      await request('POST', '/contacto', body)
+      setSuccess('Mensaje enviado, pronto nos pondremos en contacto')
       setNombre('')
       setEmail('')
+      setAsunto('')
       setMensaje('')
-    } catch {
-      setError('No se pudo enviar el mensaje')
+    } catch (err) {
+      // try to show validation errors from Laravel
+      const details = err?.details
+      if (details && details.error) {
+        const parts = []
+        for (const val of Object.values(details.error)) {
+          if (Array.isArray(val)) parts.push(...val)
+          else if (val) parts.push(String(val))
+        }
+        if (parts.length > 0) {
+          setError(parts.join(' '))
+        } else {
+          setError('No se pudo enviar el mensaje')
+        }
+      } else {
+        setError('No se pudo enviar el mensaje')
+      }
     } finally {
       setLoading(false)
     }
@@ -33,31 +55,25 @@ export default function Contacto() {
     <div>
       <Header />
       <Hero full>
-        <div style={{ width: '100%', maxWidth: 820 }}>
-          <div style={{
-            background: 'rgba(17,17,17,0.75)',
-            color: '#fff',
-            borderRadius: 16,
-            padding: 24,
-            boxShadow: '0 10px 30px rgba(0,0,0,0.35)',
-            textAlign: 'center'
-          }}>
+        <div className="container" style={{ maxWidth: 820 }}>
+          <div className="card bg-dark text-light" style={{ padding: 24, boxShadow: '0 10px 30px rgba(0,0,0,0.35)', textAlign: 'center' }}>
             <h2 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Contacto</h2>
-            <p style={{ marginTop: 8, color: '#e5e7eb' }}>
+            <p className="mt-1 text-light">
               Escríbenos para agendar citas, adoptar o resolver tus dudas.
             </p>
           </div>
         </div>
       </Hero>
-      <section style={{ padding: '28px 16px', background: '#f3f4f6' }}>
-        <div style={{ maxWidth: 820, margin: '0 auto', background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 6px 18px rgba(0,0,0,0.12)' }}>
+      <section className="section section--light">
+        <div className="container card" style={{ maxWidth: 820 }}>
           <h3 style={{ margin: '0 0 12px' }}>Envíanos un mensaje</h3>
           <form onSubmit={onSubmit}>
             <TextInput label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} name="nombre" required />
             <TextInput label="Correo electrónico" type="email" value={email} onChange={(e) => setEmail(e.target.value)} name="email" required />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-              <label style={{ fontSize: 14 }}>Mensaje</label>
-              <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value)} name="mensaje" rows={5} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc', resize: 'vertical' }} />
+            <TextInput label="Asunto" value={asunto} onChange={(e) => setAsunto(e.target.value)} name="asunto" />
+            <div className="input-group">
+              <label className="input-label">Mensaje</label>
+              <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value)} name="mensaje" rows={5} className="input-field" style={{ resize: 'vertical' }} />
             </div>
             <div className="auth-actions">
               <Button type="submit" disabled={loading}>{loading ? 'Enviando...' : 'Enviar'}</Button>

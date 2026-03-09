@@ -5,6 +5,7 @@ export interface Mascota {
   id?: number
   nombre?: string
   especie?: string
+  imagen?: string
 }
 
 export interface SolicitudAdopcionPayload {
@@ -45,7 +46,7 @@ export async function crearSolicitudAdopcion(payload: Partial<SolicitudAdopcionP
     estado: payload.estado ?? 'pendiente',
   }
   try {
-    return await request('POST', '/solicitudes-adopcion', body)
+    return await request('POST', '/solicitudes-adopcion', body, { auth: true })
   } catch (err: any) {
     const status = err?.status
     const msg = String(err?.message || '').toLowerCase()
@@ -56,27 +57,145 @@ export async function crearSolicitudAdopcion(payload: Partial<SolicitudAdopcionP
   }
 }
 
-export async function crearMascota(payload: Partial<Mascota & { descripcion?: string; raza?: string; edad?: string }>) {
+export async function adoptarMascota(id: number, payload: Partial<SolicitudAdopcionPayload> = {}) {
+  // new endpoint which posts to /mascotas/{id}/adoptar;
+  // if it does not exist fall back to the legacy solicitudes route
   try {
-    return await request('POST', '/mascotas', payload, { auth: true })
+    return await request('POST', `/mascotas/${id}/adoptar`, payload, { auth: true })
+  } catch (err: any) {
+    // ignore and fallback
+    return crearSolicitudAdopcion({ id_mascota: id, ...payload })
+  }
+}
+
+// admin helpers -----------------------------------------------------------
+
+export async function listarSolicitudesPendientes() {
+  try {
+    return await request<SolicitudAdopcionPayload[]>('GET', '/admin/solicitudes-adopcion/pendientes', undefined, { auth: true })
   } catch (err: any) {
     const status = err?.status
     const msg = String(err?.message || '').toLowerCase()
     if (status === 404 || status === 405 || msg.includes('not found')) {
-      return await request('POST', '/pets', payload, { auth: true })
+      // fall back to filtering the general collection
+      // if the admin-specific endpoint isn't available, filter the generic
+      // collection by estado using a query string. (request helper doesn't
+      // support a `query` option so we append it manually.)
+      return await request<SolicitudAdopcionPayload[]>('GET', '/solicitudes-adopcion?estado=pendiente', undefined, { auth: true })
     }
     throw err
   }
 }
 
-export async function actualizarMascota(id: number, payload: Partial<Mascota & { descripcion?: string; raza?: string; edad?: string }>) {
+export async function cambiarEstadoSolicitud(id: number, estado: string) {
   try {
-    return await request('PUT', `/mascotas/${id}`, payload, { auth: true })
+    return await request('PATCH', `/admin/solicitudes-adopcion/${id}`, { estado }, { auth: true })
   } catch (err: any) {
     const status = err?.status
     const msg = String(err?.message || '').toLowerCase()
     if (status === 404 || status === 405 || msg.includes('not found')) {
-      return await request('PUT', `/pets/${id}`, payload, { auth: true })
+      // try generic update route
+      try {
+        return await request('PATCH', `/solicitudes-adopcion/${id}`, { estado }, { auth: true })
+      } catch {
+        // maybe english
+        return await request('PATCH', `/adoption-requests/${id}`, { status: estado }, { auth: true })
+      }
+    }
+    throw err
+  }
+}
+
+export async function crearMascota(payload: Partial<Mascota & { descripcion?: string; raza?: string; edad?: string; imagen?: File | string }>) {
+  // the API now accepts multipart/form-data for the image; fall back to URL
+  try {
+    // if the caller passed a File object, build a FormData instance
+    if ((payload.imagen as any) instanceof File) {
+      const form = new FormData()
+      for (const [k, v] of Object.entries(payload)) {
+        if (v === undefined || v === null) continue
+        if (k === 'imagen') {
+          form.append('imagen', v as File)
+        } else {
+          form.append(k, String(v))
+        }
+      }
+      return await request('POST', '/mascotas', form, { auth: true })
+    }
+
+    const body: any = { ...payload }
+    if (body.edad !== undefined && body.edad !== null) {
+      const n = Number(body.edad)
+      body.edad = Number.isFinite(n) ? Math.trunc(n) : undefined
+    }
+    return await request('POST', '/mascotas', body, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      // fallback to english endpoint
+      if ((payload.imagen as any) instanceof File) {
+        const form = new FormData()
+        for (const [k, v] of Object.entries(payload)) {
+          if (v === undefined || v === null) continue
+          if (k === 'imagen') {
+            form.append('imagen', v as File)
+          } else {
+            form.append(k, String(v))
+          }
+        }
+        return await request('POST', '/pets', form, { auth: true })
+      }
+      const body: any = { ...payload }
+      if (body.edad !== undefined && body.edad !== null) {
+        const n = Number(body.edad)
+        body.edad = Number.isFinite(n) ? Math.trunc(n) : undefined
+      }
+      return await request('POST', '/pets', body, { auth: true })
+    }
+    throw err
+  }
+}
+
+export async function actualizarMascota(id: number, payload: Partial<Mascota & { descripcion?: string; raza?: string; edad?: string; imagen?: File | string }>) {
+  try {
+    // support file upload when editing
+    if ((payload.imagen as any) instanceof File) {
+      const form = new FormData()
+      for (const [k, v] of Object.entries(payload)) {
+        if (v === undefined || v === null) continue
+        if (k === 'imagen') form.append('imagen', v as File)
+        else form.append(k, String(v))
+      }
+      return await request('PUT', `/mascotas/${id}`, form, { auth: true })
+    }
+
+    const body: any = { ...payload }
+    if (body.edad !== undefined && body.edad !== null) {
+      const n = Number(body.edad)
+      body.edad = Number.isFinite(n) ? Math.trunc(n) : undefined
+    }
+    return await request('PUT', `/mascotas/${id}`, body, { auth: true })
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      // fallback english endpoint
+      if ((payload.imagen as any) instanceof File) {
+        const form = new FormData()
+        for (const [k, v] of Object.entries(payload)) {
+          if (v === undefined || v === null) continue
+          if (k === 'imagen') form.append('imagen', v as File)
+          else form.append(k, String(v))
+        }
+        return await request('PUT', `/pets/${id}`, form, { auth: true })
+      }
+      const body: any = { ...payload }
+      if (body.edad !== undefined && body.edad !== null) {
+        const n = Number(body.edad)
+        body.edad = Number.isFinite(n) ? Math.trunc(n) : undefined
+      }
+      return await request('PUT', `/pets/${id}`, body, { auth: true })
     }
     throw err
   }

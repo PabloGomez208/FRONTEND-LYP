@@ -13,6 +13,9 @@ export interface Cita {
   hora: string
   motivo?: string
   telefono?: string
+  estado?: string
+  id_veterinario?: number
+  veterinario?: string
 }
 
 export async function crearCita(payload: Partial<CitaPayload>): Promise<Cita> {
@@ -25,7 +28,7 @@ export async function crearCita(payload: Partial<CitaPayload>): Promise<Cita> {
     estado: payload.estado,
   }
   try {
-    return await request<Cita>('POST', '/citas', body)
+    return await request<Cita>('POST', '/citas', body, { auth: true })
   } catch (err: any) {
     const status = err?.status
     const msg = String(err?.message || '').toLowerCase()
@@ -38,7 +41,7 @@ export async function crearCita(payload: Partial<CitaPayload>): Promise<Cita> {
 
 export async function listarCitas(): Promise<Cita[]> {
   try {
-    return await request<Cita[]>('GET', '/citas')
+    return await request<Cita[]>('GET', '/citas', undefined, { auth: true })
   } catch (err: any) {
     const status = err?.status
     const msg = String(err?.message || '').toLowerCase()
@@ -46,6 +49,22 @@ export async function listarCitas(): Promise<Cita[]> {
       return await request<Cita[]>('GET', '/appointments')
     }
     throw err
+  }
+}
+
+export async function listarCitasPorVeterinario(vetId: number, estado?: string): Promise<Cita[]> {
+  // prefer dedicated veterinarian endpoint (with optional estado filter)
+  const qs = estado ? `?estado=${encodeURIComponent(estado)}` : ''
+  try {
+    return await request<Cita[]>('GET', `/veterinarios/${vetId}/citas${qs}`, undefined, { auth: true })
+  } catch (err: any) {
+    // if the endpoint isn't available fall back to general `/citas` and client filtering
+    const all = await listarCitas()
+    let list = Array.isArray(all) ? all : []
+    if (estado) {
+      list = list.filter((c) => (c && (c.estado ?? '').toLowerCase()) === estado.toLowerCase())
+    }
+    return list.filter((c) => c && c.id_veterinario === vetId)
   }
 }
 
@@ -99,6 +118,19 @@ export async function listarDisponibilidad(estado?: string): Promise<Disponibili
   }
 }
 
+export async function listarEspeciesMascotas(): Promise<string[]> {
+  try {
+    return await request<string[]>('GET', '/citas/mascotas-especies')
+  } catch (err: any) {
+    const status = err?.status
+    const msg = String(err?.message || '').toLowerCase()
+    if (status === 404 || status === 405 || msg.includes('not found')) {
+      return await request<string[]>('GET', '/appointments/pet-species')
+    }
+    throw err
+  }
+}
+
 export async function crearDisponibilidad(payload: Partial<Disponibilidad>) {
   try {
     return await request('POST', '/disponibilidad-citas', payload, { auth: true })
@@ -122,6 +154,40 @@ export async function actualizarDisponibilidad(id: number, payload: Partial<Disp
       return await request('PUT', `/availability/${id}`, payload, { auth: true })
     }
     throw err
+  }
+}
+
+export async function cambiarEstadoDisponibilidad(id: number, estado: string) {
+  try {
+    return await request('PATCH', `/disponibilidad-citas/${id}/estado`, { estado }, { auth: true })
+  } catch (err: any) {
+    try {
+      return await request('PATCH', `/disponibilidad-citas/${id}`, { estado }, { auth: true })
+    } catch (err2: any) {
+      const status = err2?.status
+      const msg = String(err2?.message || '').toLowerCase()
+      if (status === 404 || status === 405 || msg.includes('not found')) {
+        return await request('PATCH', `/availability/${id}/status`, { estado }, { auth: true })
+      }
+      throw err2
+    }
+  }
+}
+
+export async function confirmarCita(vetId: number, citaId: number) {
+  try {
+    return await request('POST', `/veterinarios/${vetId}/citas/${citaId}/confirmar`, undefined, { auth: true })
+  } catch {
+    // fallback to generic state change
+    return cambiarEstadoCita(citaId, 'confirmada')
+  }
+}
+
+export async function cancelarCita(vetId: number, citaId: number) {
+  try {
+    return await request('POST', `/veterinarios/${vetId}/citas/${citaId}/cancelar`, undefined, { auth: true })
+  } catch {
+    return cambiarEstadoCita(citaId, 'cancelada')
   }
 }
 

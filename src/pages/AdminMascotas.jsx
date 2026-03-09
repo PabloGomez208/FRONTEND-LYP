@@ -14,6 +14,7 @@ export default function AdminMascotas() {
   const [raza, setRaza] = useState('')
   const [edad, setEdad] = useState('')
   const [descripcion, setDescripcion] = useState('')
+  const [imagenFile, setImagenFile] = useState(null)
 
   const [editId, setEditId] = useState(null)
   const [editNombre, setEditNombre] = useState('')
@@ -21,6 +22,7 @@ export default function AdminMascotas() {
   const [editRaza, setEditRaza] = useState('')
   const [editEdad, setEditEdad] = useState('')
   const [editDescripcion, setEditDescripcion] = useState('')
+  const [editImagenFile, setEditImagenFile] = useState(null)
 
   async function load() {
     setError('')
@@ -31,6 +33,15 @@ export default function AdminMascotas() {
       setError('No se pudieron cargar mascotas')
     }
   }
+
+  // reload when other components notify that mascotas changed
+  useEffect(() => {
+    function onUpdate() {
+      load()
+    }
+    window.addEventListener('mascotas:updated', onUpdate)
+    return () => window.removeEventListener('mascotas:updated', onUpdate)
+  }, [])
   useEffect(() => { load() }, [])
 
   async function onCreate(e) {
@@ -38,8 +49,11 @@ export default function AdminMascotas() {
     setLoading(true)
     setError('')
     try {
-      await crearMascota({ nombre, especie, raza, edad, descripcion })
-      setNombre(''); setEspecie('Perro'); setRaza(''); setEdad(''); setDescripcion('')
+      const edadNum = edad !== '' ? Number(edad) : undefined
+      const payload = { nombre, especie, raza, edad: edadNum, descripcion }
+      if (imagenFile) payload.imagen = imagenFile
+      await crearMascota(payload)
+      setNombre(''); setEspecie('Perro'); setRaza(''); setEdad(''); setDescripcion(''); setImagenFile(null)
       await load()
     } catch {
       setError('No se pudo crear la mascota')
@@ -50,7 +64,10 @@ export default function AdminMascotas() {
     setLoading(true)
     setError('')
     try {
-      await actualizarMascota(Number(id), { nombre: editNombre, especie: editEspecie, raza: editRaza, edad: editEdad, descripcion: editDescripcion })
+      const edadNum = editEdad !== '' ? Number(editEdad) : undefined
+      const payload = { nombre: editNombre, especie: editEspecie, raza: editRaza, edad: edadNum, descripcion: editDescripcion }
+      if (editImagenFile) payload.imagen = editImagenFile
+      await actualizarMascota(Number(id), payload)
       setEditId(null)
       await load()
     } catch {
@@ -101,10 +118,14 @@ export default function AdminMascotas() {
                 </select>
               </div>
               <TextInput label="Raza" value={raza} onChange={(e) => setRaza(e.target.value)} />
-              <TextInput label="Edad" value={edad} onChange={(e) => setEdad(e.target.value)} />
+              <TextInput label="Edad" type="number" value={edad} onChange={(e) => setEdad(e.target.value)} />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                 <label style={{ fontSize: 14 }}>Descripción</label>
                 <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                <label style={{ fontSize: 14 }}>Imagen (archivo)</label>
+                <input type="file" accept="image/*" onChange={(e) => setImagenFile(e.target.files ? e.target.files[0] : null)} />
               </div>
               <div className="auth-actions">
                 <Button type="submit" disabled={loading}>{loading ? 'Guardando...' : 'Agregar'}</Button>
@@ -123,10 +144,19 @@ export default function AdminMascotas() {
                     {!isEdit ? (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <div>
-                          <strong>{m.nombre ?? 'Mascota'}</strong> <span style={{ color: '#6b7280' }}>{m.especie}</span>
+                      <strong>{m.nombre ?? 'Mascota'}</strong> <span style={{ color: '#6b7280' }}>{m.especie}</span>
+                      {m.estado ? <span style={{ marginLeft: 8, fontSize: 12 }}>[{m.estado}]</span> : null}
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <Button onClick={() => { setEditId(id); setEditNombre(m.nombre ?? ''); setEditEspecie(m.especie ?? 'Perro'); setEditRaza(m.raza ?? ''); setEditEdad(m.edad ?? ''); setEditDescripcion(m.descripcion ?? '') }}>Editar</Button>
+                      <Button onClick={() => {
+                            setEditId(id);
+                            setEditNombre(m.nombre ?? '');
+                            setEditEspecie(m.especie ?? 'Perro');
+                            setEditRaza(m.raza ?? '');
+                            setEditEdad(m.edad ?? '');
+                            setEditDescripcion(m.descripcion ?? '');
+                            setEditImagenFile(null);
+                          }}>Editar</Button>
                           <Button onClick={() => onDelete(id)}>Eliminar</Button>
                         </div>
                       </div>
@@ -142,10 +172,20 @@ export default function AdminMascotas() {
                           </select>
                         </div>
                         <TextInput label="Raza" value={editRaza} onChange={(e) => setEditRaza(e.target.value)} />
-                        <TextInput label="Edad" value={editEdad} onChange={(e) => setEditEdad(e.target.value)} />
+                     <TextInput label="Edad" type="number" value={editEdad} onChange={(e) => setEditEdad(e.target.value)} />
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
                           <label style={{ fontSize: 14 }}>Descripción</label>
                           <textarea value={editDescripcion} onChange={(e) => setEditDescripcion(e.target.value)} rows={4} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc', resize: 'vertical' }} />
+                        </div>
+                        {/* show current image if available */}
+                        {m.imagen && (
+                          <div style={{ marginBottom: 12 }}>
+                            <img src={m.imagen} alt="mascota" style={{ maxWidth: 120, borderRadius: 8 }} />
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                          <label style={{ fontSize: 14 }}>Imagen (archivo)</label>
+                          <input type="file" accept="image/*" onChange={(e) => setEditImagenFile(e.target.files ? e.target.files[0] : null)} />
                         </div>
                         <div className="auth-actions">
                           <Button onClick={() => onSaveEdit(id)} disabled={loading}>{loading ? 'Guardando...' : 'Guardar'}</Button>

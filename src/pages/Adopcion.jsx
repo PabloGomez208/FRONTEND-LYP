@@ -43,7 +43,7 @@ export default function Adopcion() {
             raza: '',
             edad: '',
             descripcion: '',
-            foto: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop'
+            foto: m.imagen ?? m.foto ?? 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop'
           }))
           setItems(mapped)
         }
@@ -103,7 +103,12 @@ export default function Adopcion() {
                     localStorage.setItem('selected_mascota_nombre', m.nombre)
                     localStorage.setItem('selected_mascota_especie', m.especie)
                   } catch (e) { void e }
-                  window.location.hash = 'solicitud-adopcion?mascota=' + encodeURIComponent(m.nombre)
+                  {
+                    const q = new URLSearchParams()
+                    q.set('mascota', m.nombre || '')
+                    if (m.especie) q.set('especie', m.especie)
+                    window.location.hash = 'solicitud-adopcion?' + q.toString()
+                  }
                 }}>Adoptar</Button>
               </div>
             </article>
