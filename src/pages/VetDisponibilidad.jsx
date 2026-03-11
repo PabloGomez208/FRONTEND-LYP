@@ -125,8 +125,8 @@ export default function VetDisponibilidad() {
                           <div style={{ color: '#374151' }}>Estado: {d.estado ?? 'disponible'}</div>
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <Button onClick={() => { setEditId(id); setEditFecha(d.fecha); setEditInicio(d.hora_inicio); setEditFin(d.hora_fin); setEditEstado(d.estado ?? 'disponible') }}>Editar</Button>
-                          <Button onClick={() => onDelete(id)}>Eliminar</Button>
+                          <Button variant="secondary" onClick={() => { setEditId(id); setEditFecha(d.fecha); setEditInicio(d.hora_inicio); setEditFin(d.hora_fin); setEditEstado(d.estado ?? 'disponible') }}>Editar</Button>
+                          <Button variant="danger" onClick={() => onDelete(id)}>Eliminar</Button>
                         </div>
                       </div>
                     ) : (

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Header from '../Components/Header.jsx'
 import Hero from '../Components/Hero.jsx'
 import Button from '../Components/Button.jsx'
-import { listarCitas, cambiarEstadoCita, confirmarCita, cancelarCita } from '../lib/api/citas'
+import { listarCitas, listarCitasPorVeterinario, cambiarEstadoCita, confirmarCita, cancelarCita } from '../lib/api/citas'
 import { getUser } from '../lib/api/http'
 
 export default function VetSolicitudes() {
@@ -100,8 +100,8 @@ export default function VetSolicitudes() {
                   {c.estado ? <span>Estado: {c.estado}</span> : <span>Estado: pendiente</span>}
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <Button onClick={() => onChangeEstado(id, 'aceptada')} disabled={loading}>Aceptar</Button>
-                  <Button onClick={() => onChangeEstado(id, 'rechazada')} disabled={loading}>Rechazar</Button>
+                  <Button onClick={() => onChangeEstado(id, 'aceptada')} disabled={loading} variant="primary">Aceptar</Button>
+                  <Button onClick={() => onChangeEstado(id, 'rechazada')} disabled={loading} variant="danger">Rechazar</Button>
                 </div>
               </div>
             )

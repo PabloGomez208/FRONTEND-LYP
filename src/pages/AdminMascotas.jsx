@@ -6,19 +6,26 @@ import Button from '../Components/Button.jsx'
 import { listarMascotas, crearMascota, actualizarMascota, eliminarMascota } from '../lib/api/adopcion'
 
 export default function AdminMascotas() {
+
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
   const [nombre, setNombre] = useState('')
-  const [especie, setEspecie] = useState('Perro')
+  const [idEspecie, setIdEspecie] = useState('')
+  const [idSexo, setIdSexo] = useState('')
   const [raza, setRaza] = useState('')
   const [edad, setEdad] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [imagenFile, setImagenFile] = useState(null)
 
+  const [especies, setEspecies] = useState([])
+  const [sexos, setSexos] = useState([])
+
   const [editId, setEditId] = useState(null)
   const [editNombre, setEditNombre] = useState('')
-  const [editEspecie, setEditEspecie] = useState('Perro')
+  const [editIdEspecie, setEditIdEspecie] = useState('')
+  const [editIdSexo, setEditIdSexo] = useState('')
   const [editRaza, setEditRaza] = useState('')
   const [editEdad, setEditEdad] = useState('')
   const [editDescripcion, setEditDescripcion] = useState('')
@@ -34,61 +41,132 @@ export default function AdminMascotas() {
     }
   }
 
-  // reload when other components notify that mascotas changed
-  useEffect(() => {
-    function onUpdate() {
-      load()
+  async function loadOpciones() {
+    try {
+
+      const resEspecies = await fetch("http://localhost:8000/api/especies")
+      const especiesData = await resEspecies.json()
+
+      const resSexos = await fetch("http://localhost:8000/api/sexos")
+      const sexosData = await resSexos.json()
+
+      setEspecies(especiesData)
+      setSexos(sexosData)
+
+    } catch (err) {
+      console.error("Error cargando selects", err)
     }
-    window.addEventListener('mascotas:updated', onUpdate)
-    return () => window.removeEventListener('mascotas:updated', onUpdate)
+  }
+
+  useEffect(() => {
+    load()
+    loadOpciones()
   }, [])
-  useEffect(() => { load() }, [])
 
   async function onCreate(e) {
+
     e.preventDefault()
     setLoading(true)
     setError('')
+
     try {
+
       const edadNum = edad !== '' ? Number(edad) : undefined
-      const payload = { nombre, especie, raza, edad: edadNum, descripcion }
+
+      const payload = {
+        nombre,
+        id_especie: idEspecie,
+        id_sexo: idSexo,
+        raza,
+        edad: edadNum,
+        descripcion
+      }
+
       if (imagenFile) payload.imagen = imagenFile
+
       await crearMascota(payload)
-      setNombre(''); setEspecie('Perro'); setRaza(''); setEdad(''); setDescripcion(''); setImagenFile(null)
+
+      setNombre('')
+      setIdEspecie('')
+      setIdSexo('')
+      setRaza('')
+      setEdad('')
+      setDescripcion('')
+      setImagenFile(null)
+
       await load()
+
     } catch {
       setError('No se pudo crear la mascota')
-    } finally { setLoading(false) }
+    }
+
+    finally {
+      setLoading(false)
+    }
+
   }
 
   async function onSaveEdit(id) {
+
     setLoading(true)
     setError('')
+
     try {
+
       const edadNum = editEdad !== '' ? Number(editEdad) : undefined
-      const payload = { nombre: editNombre, especie: editEspecie, raza: editRaza, edad: edadNum, descripcion: editDescripcion }
+
+      const payload = {
+        nombre: editNombre,
+        id_especie: editIdEspecie,
+        id_sexo: editIdSexo,
+        raza: editRaza,
+        edad: edadNum,
+        descripcion: editDescripcion
+      }
+
       if (editImagenFile) payload.imagen = editImagenFile
+
       await actualizarMascota(Number(id), payload)
+
       setEditId(null)
+
       await load()
+
     } catch {
       setError('No se pudo actualizar la mascota')
-    } finally { setLoading(false) }
+    }
+
+    finally {
+      setLoading(false)
+    }
+
   }
 
   async function onDelete(id) {
+
     setLoading(true)
     setError('')
+
     try {
+
       await eliminarMascota(Number(id))
       await load()
+
     } catch {
       setError('No se pudo eliminar la mascota')
-    } finally { setLoading(false) }
+    }
+
+    finally {
+      setLoading(false)
+    }
+
   }
 
   return (
     <div>
+
       <Header />
+
       <Hero full>
         <div style={{ width: '100%', maxWidth: 900 }}>
           <div style={{
@@ -103,103 +181,178 @@ export default function AdminMascotas() {
           </div>
         </div>
       </Hero>
+
       <section style={{ padding: '24px 16px' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 6px 18px rgba(0,0,0,0.12)' }}>
-            <h3 style={{ margin: '0 0 12px' }}>Agregar mascota</h3>
+
+        <div style={{
+          maxWidth: 1100,
+          margin: '0 auto',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 16
+        }}>
+
+          {/* CREAR MASCOTA */}
+
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            padding: 18,
+            boxShadow: '0 6px 18px rgba(0,0,0,0.12)'
+          }}>
+
+            <h3>Agregar mascota</h3>
+
             <form onSubmit={onCreate}>
-              <TextInput label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                <label style={{ fontSize: 14 }}>Especie</label>
-                <select value={especie} onChange={(e) => setEspecie(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}>
-                  <option>Perro</option>
-                  <option>Gato</option>
-                  <option>Otro</option>
-                </select>
-              </div>
+
+              <TextInput
+                label="Nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+              />
+
+              {/* ESPECIE */}
+
+              <label>Especie</label>
+
+              <select
+                value={idEspecie}
+                onChange={(e) => setIdEspecie(e.target.value)}
+                style={{ padding: 10, borderRadius: 8, border: '1px solid #ccc', marginBottom: 12 }}
+              >
+
+                <option value="">Seleccione especie</option>
+
+                {especies.map((e) => (
+                  <option key={e.id_especie} value={e.id_especie}>
+                    {e.nombre}
+                  </option>
+                ))}
+
+              </select>
+
+              {/* SEXO */}
+
+              <label>Sexo</label>
+
+              <select
+                value={idSexo}
+                onChange={(e) => setIdSexo(e.target.value)}
+                style={{ padding: 10, borderRadius: 8, border: '1px solid #ccc', marginBottom: 12 }}
+              >
+
+                <option value="">Seleccione sexo</option>
+
+                {sexos.map((s) => (
+                  <option key={s.id_sexo} value={s.id_sexo}>
+                    {s.nombre}
+                  </option>
+                ))}
+
+              </select>
+
               <TextInput label="Raza" value={raza} onChange={(e) => setRaza(e.target.value)} />
-              <TextInput label="Edad" type="number" value={edad} onChange={(e) => setEdad(e.target.value)} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                <label style={{ fontSize: 14 }}>Descripción</label>
-                <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={4} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc', resize: 'vertical' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                <label style={{ fontSize: 14 }}>Imagen (archivo)</label>
-                <input type="file" accept="image/*" onChange={(e) => setImagenFile(e.target.files ? e.target.files[0] : null)} />
-              </div>
-              <div className="auth-actions">
-                <Button type="submit" disabled={loading}>{loading ? 'Guardando...' : 'Agregar'}</Button>
-              </div>
+
+              <TextInput
+                label="Edad"
+                type="number"
+                value={edad}
+                onChange={(e) => setEdad(e.target.value)}
+              />
+
+              <label>Descripción</label>
+
+              <textarea
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                rows={4}
+                style={{
+                  padding: 10,
+                  borderRadius: 8,
+                  border: '1px solid #ccc',
+                  marginBottom: 12
+                }}
+              />
+
+              <label>Imagen</label>
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImagenFile(e.target.files[0])}
+              />
+
+              <Button type="submit" disabled={loading}>
+                {loading ? 'Guardando...' : 'Agregar'}
+              </Button>
+
             </form>
-            {error ? <p className="auth-feedback" style={{ color: 'crimson' }}>{error}</p> : null}
+
+            {error && <p style={{ color: 'red' }}>{error}</p>}
+
           </div>
-          <div style={{ background: '#fff', borderRadius: 16, padding: 18, boxShadow: '0 6px 18px rgba(0,0,0,0.12)' }}>
-            <h3 style={{ margin: '0 0 12px' }}>Listado</h3>
-            <div style={{ display: 'grid', gap: 12 }}>
-              {items.map((m) => {
-                const id = m.id ?? m.id_mascota
-                const isEdit = editId === id
-                return (
-                  <div key={id} style={{ background: '#f5f5f5', borderRadius: 12, padding: 12 }}>
-                    {!isEdit ? (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                      <strong>{m.nombre ?? 'Mascota'}</strong> <span style={{ color: '#6b7280' }}>{m.especie}</span>
-                      {m.estado ? <span style={{ marginLeft: 8, fontSize: 12 }}>[{m.estado}]</span> : null}
-                        </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                      <Button onClick={() => {
-                            setEditId(id);
-                            setEditNombre(m.nombre ?? '');
-                            setEditEspecie(m.especie ?? 'Perro');
-                            setEditRaza(m.raza ?? '');
-                            setEditEdad(m.edad ?? '');
-                            setEditDescripcion(m.descripcion ?? '');
-                            setEditImagenFile(null);
-                          }}>Editar</Button>
-                          <Button onClick={() => onDelete(id)}>Eliminar</Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <TextInput label="Nombre" value={editNombre} onChange={(e) => setEditNombre(e.target.value)} />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                          <label style={{ fontSize: 14 }}>Especie</label>
-                          <select value={editEspecie} onChange={(e) => setEditEspecie(e.target.value)} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc' }}>
-                            <option>Perro</option>
-                            <option>Gato</option>
-                            <option>Otro</option>
-                          </select>
-                        </div>
-                        <TextInput label="Raza" value={editRaza} onChange={(e) => setEditRaza(e.target.value)} />
-                     <TextInput label="Edad" type="number" value={editEdad} onChange={(e) => setEditEdad(e.target.value)} />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                          <label style={{ fontSize: 14 }}>Descripción</label>
-                          <textarea value={editDescripcion} onChange={(e) => setEditDescripcion(e.target.value)} rows={4} style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid #ccc', resize: 'vertical' }} />
-                        </div>
-                        {/* show current image if available */}
-                        {m.imagen && (
-                          <div style={{ marginBottom: 12 }}>
-                            <img src={m.imagen} alt="mascota" style={{ maxWidth: 120, borderRadius: 8 }} />
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
-                          <label style={{ fontSize: 14 }}>Imagen (archivo)</label>
-                          <input type="file" accept="image/*" onChange={(e) => setEditImagenFile(e.target.files ? e.target.files[0] : null)} />
-                        </div>
-                        <div className="auth-actions">
-                          <Button onClick={() => onSaveEdit(id)} disabled={loading}>{loading ? 'Guardando...' : 'Guardar'}</Button>
-                          <Button onClick={() => setEditId(null)} variant="secondary">Cancelar</Button>
-                        </div>
-                      </div>
-                    )}
+
+          {/* LISTADO */}
+
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            padding: 18,
+            boxShadow: '0 6px 18px rgba(0,0,0,0.12)'
+          }}>
+
+            <h3>Listado</h3>
+
+            {items.map((m) => {
+
+              const id = m.id_mascota
+
+              return (
+
+                <div key={id} style={{
+                  background: '#f5f5f5',
+                  padding: 12,
+                  borderRadius: 12,
+                  marginBottom: 10
+                }}>
+
+                  <strong>{m.nombre}</strong> ({m.especie}) [{m.sexo}]
+
+                  <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+
+                    <Button onClick={() => {
+
+                      setEditId(id)
+                      setEditNombre(m.nombre || '')
+                      setEditRaza(m.raza || '')
+                      setEditEdad(m.edad || '')
+                      setEditDescripcion(m.descripcion || '')
+                      setEditIdEspecie(m.id_especie || '')
+                      setEditIdSexo(m.id_sexo || '')
+
+                    }}>
+                      Editar
+                    </Button>
+
+                    <Button onClick={() => onDelete(id)}>
+                      Eliminar
+                    </Button>
+
                   </div>
-                )
-              })}
-            </div>
+
+                </div>
+
+              )
+
+            })}
+
           </div>
+
         </div>
+
       </section>
+
     </div>
   )
 }

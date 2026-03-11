@@ -126,7 +126,7 @@ export default function AdminUsuarios() {
                         </div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           <Button onClick={() => { setEditId(id); setEditName(u.nombre ?? u.name ?? ''); setEditEmail(u.email ?? ''); setEditIdRol(u.id_rol ?? 3) }}>Editar</Button>
-                          <Button onClick={() => onDelete(id)}>Eliminar</Button>
+                          <Button variant="danger" onClick={() => onDelete(id)}>Eliminar</Button>
                         </div>
                       </div>
                     ) : (

@@ -3,7 +3,7 @@
   line-height: 1.5;
   font-weight: 400;
 
-  /* color variables for light/dark themes */
+  /* color variables for light/dark themes (original theme) */
   --color-bg: #242424;
   --color-text: rgba(255, 255, 255, 0.87);
   --color-bg-light: #ffffff;
@@ -151,13 +151,18 @@ button:focus-visible {
 }
 
 .btn {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 10px 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 
 .btn-primary {
@@ -170,23 +175,10 @@ button:focus-visible {
   color: #213547;
 }
 
-.text-dark {
-  color: var(--color-text-dark) !important;
-}
-
-.text-light {
-  color: var(--color-text) !important;
-}
-
-.bg-dark {
-  background: var(--color-bg);
-  color: var(--color-text);
-}
-
-.bg-light {
-  background: var(--color-bg-light);
-  color: var(--color-text-dark);
-}
+.text-dark { color: var(--color-text-dark) !important; }
+.text-light { color: var(--color-text) !important; }
+.bg-dark { background: var(--color-bg); color: var(--color-text); }
+.bg-light { background: var(--color-bg-light); color: var(--color-text-dark); }
 
 /* form inputs */
 .input-group {
@@ -198,11 +190,7 @@ button:focus-visible {
 .input-label {
   font-size: 14px;
 }
-.input-field {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
+.input-field { padding: 10px 12px; border-radius: 8px; border: 1px solid #ccc; }
 
 /* header and nav */
 .logo {
@@ -233,3 +221,12 @@ button:focus-visible {
 
 /* spacing utilities */
 .mt-1 { margin-top: 6px; }
+
+/* enforce readable dark text in content areas */
+section, section *, article, article *, .card, .card * {
+  color: #111827 !important;
+}
+section strong, article strong, .card strong {
+  color: #111827 !important;
+  font-weight: 700;
+}

@@ -72,8 +72,8 @@ export default function AdminSolicitudes() {
                   Motivo: {s.motivo || 'Sin motivo'}
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  <Button onClick={() => onDecide(id, 'aceptada')} disabled={loading}>Aceptar</Button>
-                  <Button onClick={() => onDecide(id, 'rechazada')} disabled={loading}>Rechazar</Button>
+                  <Button onClick={() => onDecide(id, 'aceptada')} disabled={loading} variant="primary">Aceptar</Button>
+                  <Button onClick={() => onDecide(id, 'rechazada')} disabled={loading} variant="danger">Rechazar</Button>
                 </div>
               </div>
             )

@@ -189,7 +189,7 @@ export default function Citas() {
                         <option value="confirmada">Confirmada</option>
                         <option value="cancelada">Cancelada</option>
                       </select>
-                      <Button onClick={() => adminEliminar(id)} disabled={adminLoading}>Eliminar</Button>
+                  <Button onClick={() => adminEliminar(id)} disabled={adminLoading} variant="danger">Eliminar</Button>
                     </div>
                   </div>
                 )

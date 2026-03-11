@@ -52,6 +52,23 @@ export async function listarCitas(): Promise<Cita[]> {
   }
 }
 
+export async function listarCitasDeCliente(clienteId: number): Promise<Cita[]> {
+  try {
+    return await request<Cita[]>('GET', `/usuarios/${clienteId}/citas`, undefined, { auth: true })
+  } catch (err: any) {
+    try {
+      return await request<Cita[]>('GET', `/clientes/${clienteId}/citas`, undefined, { auth: true })
+    } catch {
+      const all = await listarCitas()
+      const list = Array.isArray(all) ? all : []
+      return list.filter((c) => {
+        const cid = (c as any)?.id_cliente ?? (c as any)?.cliente_id ?? (c as any)?.id_usuario ?? (c as any)?.user_id
+        return Number(cid) === Number(clienteId)
+      })
+    }
+  }
+}
+
 export async function listarCitasPorVeterinario(vetId: number, estado?: string): Promise<Cita[]> {
   // prefer dedicated veterinarian endpoint (with optional estado filter)
   const qs = estado ? `?estado=${encodeURIComponent(estado)}` : ''

@@ -33,22 +33,54 @@ const mascotas = [
 
 export default function Adopcion() {
   const [items, setItems] = useState(mascotas)
+  function resolveImage(src) {
+    const fallback = 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop'
+    if (!src || typeof src !== 'string') return fallback
+    // absolute urls pass-through
+    if (/^https?:\/\//i.test(src)) return src
+    // normalize common storage prefixes
+    let path = src.replace(/^public\//, '')
+    if (!path.startsWith('/')) path = '/' + path
+    // prefer backend target host if provided
+    const target = import.meta.env.VITE_API_TARGET || ''
+    if (target) {
+      const base = String(target).replace(/\/+$/, '')
+      return `${base}${path}`
+    }
+    // as a last resort, let the dev server try to proxy static files
+    return path
+  }
+  async function refresh() {
+    try {
+      const data = await listarMascotas()
+      if (Array.isArray(data) && data.length > 0) {
+        const available = data.filter((m) => {
+          const estado = String(m?.estado ?? '').toLowerCase()
+          // visible si no tiene estado, o si está disponible/activo
+          if (!estado) return true
+          return estado.includes('disponible') || estado.includes('activo')
+        })
+        const mapped = (available.length > 0 ? available : data).map((m) => {
+          const nombre = m?.nombre ?? 'Mascota'
+          const especie = m?.especie ?? m?.especieRef?.nombre ?? 'Desconocida'
+          const raza = m?.raza ?? ''
+          const edadRaw = m?.edad
+          const edad = (typeof edadRaw === 'number' && Number.isFinite(edadRaw))
+            ? String(edadRaw)
+            : (edadRaw ?? '')
+          const descripcion = m?.descripcion ?? ''
+          const foto = resolveImage(m?.imagen ?? m?.foto)
+          return { nombre, especie, raza, edad, descripcion, foto }
+        })
+        setItems(mapped)
+      }
+    } catch {}
+  }
   useEffect(() => {
-    listarMascotas()
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((m) => ({
-            nombre: m.nombre ?? 'Mascota',
-            especie: m.especie ?? 'Desconocida',
-            raza: '',
-            edad: '',
-            descripcion: '',
-            foto: m.imagen ?? m.foto ?? 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop'
-          }))
-          setItems(mapped)
-        }
-      })
-      .catch(() => {})
+    refresh()
+    function onUpdate() { refresh() }
+    window.addEventListener('mascotas:updated', onUpdate)
+    return () => window.removeEventListener('mascotas:updated', onUpdate)
   }, [])
   return (
     <div>
@@ -83,7 +115,7 @@ export default function Adopcion() {
               padding: 16,
               boxShadow: '0 6px 16px rgba(0,0,0,0.12)'
             }}>
-              <h3 style={{ margin: '4px 0 10px', fontSize: 20 }}>{m.nombre}</h3>
+              <h3 style={{ margin: '4px 0 10px', fontSize: 20, color: '#111827' }}>{m.nombre}</h3>
               <div style={{
                 width: '100%',
                 aspectRatio: '16/10',
@@ -91,12 +123,12 @@ export default function Adopcion() {
                 overflow: 'hidden',
                 marginBottom: 12
               }}>
-                <img src={m.foto} alt={m.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={m.foto} alt={m.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?q=80&w=800&auto=format&fit=crop' }} />
               </div>
-              <p style={{ margin: '6px 0' }}><strong>Especie:</strong> {m.especie}</p>
-              <p style={{ margin: '6px 0' }}><strong>Raza:</strong> {m.raza}</p>
-              <p style={{ margin: '6px 0' }}><strong>Edad:</strong> {m.edad}</p>
-              <p style={{ marginTop: 8 }}>{m.descripcion}</p>
+              <p style={{ margin: '6px 0', color: '#111827' }}><strong style={{ color: '#111827' }}>Especie:</strong> {m.especie || '—'}</p>
+              <p style={{ margin: '6px 0', color: '#111827' }}><strong style={{ color: '#111827' }}>Raza:</strong> {m.raza || '—'}</p>
+              <p style={{ margin: '6px 0', color: '#111827' }}><strong style={{ color: '#111827' }}>Edad:</strong> {m.edad || '—'}</p>
+              <p style={{ marginTop: 8, color: '#111827' }}>{m.descripcion || ''}</p>
               <div style={{ marginTop: 12 }}>
                 <Button onClick={() => {
                   try {

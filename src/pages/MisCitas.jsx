@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import Header from '../Components/Header.jsx'
 import Hero from '../Components/Hero.jsx'
 import Button from '../Components/Button.jsx'
-import { listarCitas, eliminarCita, listarCitasPorVeterinario, listarDisponibilidad } from '../lib/api/citas'
+import { listarCitas, listarCitasDeCliente, eliminarCita, listarCitasPorVeterinario, listarDisponibilidad } from '../lib/api/citas'
 import { getUser } from '../lib/api/http'
 
 export default function MisCitas() {
@@ -13,15 +13,20 @@ export default function MisCitas() {
   useEffect(() => {
     const u = getUser()
     const uid = (u?.id ?? u?.id_usuario ?? u?.id_veterinario)
-    const fetch = u?.role === 'veterinario' ? listarCitasPorVeterinario(uid) : listarCitas()
-    fetch
+    const fetchPromise = u?.role === 'veterinario'
+      ? listarCitasPorVeterinario(uid)
+      : listarCitasDeCliente(uid)
+    fetchPromise
       .then((data) => {
         const list = Array.isArray(data) ? data : []
         let mine
         if (u?.role === 'veterinario') {
-          mine = list.filter((c) => c && c.id_veterinario === uid)
+          mine = list.filter((c) => c && Number(c?.id_veterinario) === Number(uid))
         } else {
-          mine = list.filter((c) => c && c.id_cliente === uid)
+          mine = list.filter((c) => {
+            const cid = c?.id_cliente ?? c?.cliente_id ?? c?.id_usuario ?? c?.user_id
+            return Number(cid) === Number(uid)
+          })
         }
         setItems(mine.length > 0 ? mine : list)
       })
@@ -34,15 +39,18 @@ export default function MisCitas() {
     try {
       await eliminarCita(Number(id))
       // refresh both list and availability in case a slot freed up
-      const data = await listarCitas()
-      const list = Array.isArray(data) ? data : []
       const u = getUser()
       const uid = (u?.id ?? u?.id_usuario ?? u?.id_veterinario)
+      const data = await (u?.role === 'veterinario' ? listarCitasPorVeterinario(uid) : listarCitasDeCliente(uid))
+      const list = Array.isArray(data) ? data : []
       let mine
       if (u?.role === 'veterinario') {
-        mine = list.filter((c) => c && c.id_veterinario === uid)
+        mine = list.filter((c) => c && Number(c?.id_veterinario) === Number(uid))
       } else {
-        mine = list.filter((c) => c && c.id_cliente === uid)
+        mine = list.filter((c) => {
+          const cid = c?.id_cliente ?? c?.cliente_id ?? c?.id_usuario ?? c?.user_id
+          return Number(cid) === Number(uid)
+        })
       }
       setItems(mine.length > 0 ? mine : list)
       // try refreshing availability as well (client code elsewhere may depend on it)
